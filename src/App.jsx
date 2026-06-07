@@ -31,10 +31,24 @@ function formatKey(y, m, d) {
 
 export default function App() {
   const today = new Date();
-  const [trackers, setTrackers] = useState([
-    { id: 1, name: "Pompes", unit: "reps", max: 100, color: 0, scores: {} },
-    { id: 2, name: "Abdos", unit: "reps", max: 200, color: 1, scores: {} },
-  ]);
+  const [trackers, setTrackers] = useState(() => {
+    try {
+      const saved = localStorage.getItem("performance-trackers");
+      return saved ? JSON.parse(saved) : [
+        { id: 1, name: "Pompes", unit: "reps", max: 100, color: 0, scores: {} },
+        { id: 2, name: "Abdos", unit: "reps", max: 200, color: 1, scores: {} },
+      ];
+    } catch {
+      return [
+        { id: 1, name: "Pompes", unit: "reps", max: 100, color: 0, scores: {} },
+        { id: 2, name: "Abdos", unit: "reps", max: 200, color: 1, scores: {} },
+      ];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("performance-trackers", JSON.stringify(trackers));
+  }, [trackers]);
   const [activeTracker, setActiveTracker] = useState(1);
   const [view, setView] = useState("calendar"); // calendar | stats
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
