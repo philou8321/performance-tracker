@@ -63,6 +63,11 @@ export default function App() {
   const [newMax, setNewMax] = useState("");
   const [newUnit, setNewUnit] = useState("");
   const [newMode, setNewMode] = useState("min");
+  const [editModal, setEditModal] = useState(null);
+  const [editName, setEditName] = useState("");
+  const [editMax, setEditMax] = useState("");
+  const [editUnit, setEditUnit] = useState("");
+  const [editMode, setEditMode] = useState("min");
 
   const tracker = trackers.find(t => t.id === activeTracker) || trackers[0];
   const color = COLORS[tracker?.color % COLORS.length];
@@ -116,6 +121,24 @@ export default function App() {
     const remaining = trackers.filter(t => t.id !== id);
     setTrackers(remaining);
     if (activeTracker === id) setActiveTracker(remaining[0]?.id);
+  }
+
+  function openEdit(t) {
+    setEditModal(t.id);
+    setEditName(t.name);
+    setEditMax(String(t.max));
+    setEditUnit(t.unit);
+    setEditMode(t.mode || "min");
+  }
+
+  function saveEdit() {
+    if (!editName.trim()) return;
+    setTrackers(prev => prev.map(t =>
+      t.id === editModal
+        ? { ...t, name: editName.trim(), max: parseFloat(editMax) || t.max, unit: editUnit || t.unit, mode: editMode }
+        : t
+    ));
+    setEditModal(null);
   }
 
   function getMonthScores() {
@@ -229,7 +252,7 @@ export default function App() {
 
         {/* Mode badge */}
         {tracker && (
-          <div style={{ marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
             <span style={{
               fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20,
               background: isMax ? "#E6394622" : `${color.bg}22`,
@@ -237,6 +260,11 @@ export default function App() {
             }}>
               {isMax ? "⬇️ Maximum à ne pas dépasser" : "⬆️ Objectif minimum à atteindre"}
             </span>
+            <button onClick={() => openEdit(tracker)} style={{
+              padding: "5px 12px", borderRadius: 20, border: "none", cursor: "pointer",
+              background: "#2A2A35", color: "#aaa", fontSize: 12, fontWeight: 600,
+              display: "flex", alignItems: "center", gap: 4,
+            }}>⚙️ Modifier</button>
           </div>
         )}
 
@@ -442,6 +470,51 @@ export default function App() {
           </div>
         </div>
       )}
+      {/* Edit Tracker Modal */}
+      {editModal && tracker && (
+        <div style={{ position: "fixed", inset: 0, background: "#000000cc", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 100 }} onClick={() => setEditModal(null)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#1E1E28", borderRadius: "20px 20px 0 0", padding: 22, width: "100%", maxWidth: 480 }}>
+            <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 6 }}>Modifier le tracker</div>
+            <div style={{ color: "#666", fontSize: 12, marginBottom: 18 }}>Les scores existants ne sont pas affectés</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <input value={editName} onChange={e => setEditName(e.target.value)}
+                placeholder="Nom"
+                style={{ padding: "11px 13px", background: "#2A2A35", border: "2px solid #3A3A45", borderRadius: 11, color: "#fff", fontSize: 14, outline: "none" }} />
+              <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 11, color: "#666", marginBottom: 5 }}>Objectif / Limite</div>
+                  <input value={editMax} onChange={e => setEditMax(e.target.value)}
+                    type="number" step="0.1" placeholder="Valeur"
+                    style={{ width: "100%", padding: "11px 13px", background: "#2A2A35", border: `2px solid ${color.bg}55`, borderRadius: 11, color: "#fff", fontSize: 16, fontWeight: 700, outline: "none", boxSizing: "border-box" }} />
+                </div>
+                <div style={{ width: 80 }}>
+                  <div style={{ fontSize: 11, color: "#666", marginBottom: 5 }}>Unité</div>
+                  <input value={editUnit} onChange={e => setEditUnit(e.target.value)}
+                    placeholder="km, h..."
+                    style={{ width: "100%", padding: "11px 13px", background: "#2A2A35", border: "2px solid #3A3A45", borderRadius: 11, color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box" }} />
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: "#666", marginBottom: 5 }}>Type d'objectif</div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {[["min", "⬆️ Minimum à atteindre"], ["max", "⬇️ Maximum à ne pas dépasser"]].map(([val, label]) => (
+                    <button key={val} onClick={() => setEditMode(val)} style={{
+                      flex: 1, padding: "10px 8px", borderRadius: 11, border: "none", cursor: "pointer",
+                      background: editMode === val ? (val === "max" ? "#E63946" : "#06D6A0") : "#2A2A35",
+                      color: editMode === val ? "#fff" : "#888", fontSize: 11, fontWeight: 700,
+                    }}>{label}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
+              <button onClick={() => setEditModal(null)} style={{ flex: 1, padding: 13, borderRadius: 11, border: "none", background: "#2A2A35", color: "#aaa", cursor: "pointer", fontWeight: 700 }}>Annuler</button>
+              <button onClick={saveEdit} style={{ flex: 2, padding: 13, borderRadius: 11, border: "none", background: color.bg, color: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 15 }}>Enregistrer</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
